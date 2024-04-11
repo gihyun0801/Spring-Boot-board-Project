@@ -3,13 +3,20 @@ package edu.kh.project.member.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.bind.support.SessionStatus;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import edu.kh.project.member.model.dto.Member;
 import edu.kh.project.member.model.serviceImpl.MemberService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @SessionAttributes({"loginMember"})
@@ -41,22 +48,33 @@ public class MemberController {
 	 * @param model
 	 * @return
 	 */
-	@PostMapping("login")
+	@RequestMapping("login")
 	public String memberLogin(
 			Member inputMember,
 			RedirectAttributes ra,
-			Model model) {
+			Model model,
+			@RequestParam(value="saveId", required=false) String saveId,
+			HttpServletResponse resp
+			) {
+		// 체크박스
+		// - 체크가 된 경우 : "on" 
+		// - 체크가 안된 경우 null 
+		
+		
 		
 		
 		Member loginMember = service.login(inputMember);
 		
 		String message = "";
 		
+		System.out.println(loginMember);
+		
 		if(loginMember == null) {
 			message = "아이디 또는 비밀번호가 일치하지 않습니다";
 			ra.addFlashAttribute("message" , message);
 		}
 		
+		// 로그인 성공 시 
 		if(loginMember != null) {
 			//Session. scope 에 loginMember 추가
 			model.addAttribute("loginMember", loginMember);
@@ -64,11 +82,70 @@ public class MemberController {
 			
 			
 			// 2단계 클래스위에 @Session attribute 추가 
+			
+			// **********************************************
+			
+			// 아이디 저장 (Cookie 사용)
+			
+			Cookie cookie = new Cookie("saveId", loginMember.getMemberEmail());
+			//saveId=user01@kh.or.kr
+			
+			// 클라이언트가 어떤 요청을 할 때 쿠키가 첨부될지 지정
+			
+			// ex) "/" setPath 에다가 최상위 주소를 작성하면 Ip 또는 도메인 또는 localhost 라는 뜻이다
+			//  		뒤에 "/" --> 메인 페이지 + 그 하위 주소 모두
+			//  / 이렇게 작성햇으니 최상위 주소 하고 그 하위 모든 주소에서 쿠키가 적용됨
+			cookie.setPath("/");
+			
+			
+			if(saveId != null) { //아이디 저장 체크 시
+				cookie.setMaxAge(60 * 60 * 24 * 30); // 30일 (초 단위로 지정)
+				
+			}else {
+				cookie.setMaxAge(0);
+			}
+			
+			
+			resp.addCookie(cookie);
+			
 		}
 		
 		
 		
-		return "redirect:/";
+		
+		return "redirect:/"; //메인페이지 재요청
+		
+	}
+	
+	/** 로그아웃  
+	 * session에 저장된 로그인된 회원 정보를 없앰(만료,무효화)
+	 * @return
+	 */
+	@GetMapping("logout")
+	public String logout(SessionStatus status) {
+		status.setComplete();
+		
+		return "redirect:/"; //메인 페이지 리다이렉트
+	}
+	
+	
+	/** 회원가입페이지
+	 * @return
+	 */
+	@GetMapping("signup")
+	public String signUp() {
+		
+		return "member/signup";
+		
+	}
+	
+	@GetMapping("checkEmail")
+	@ResponseBody
+	public int checkEmail(
+			@RequestParam("memberEmail") String memberEmail
+			) {
+		
+		return service.checkEmail(memberEmail);
 		
 	}
 	 

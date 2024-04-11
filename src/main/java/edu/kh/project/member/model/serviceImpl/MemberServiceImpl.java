@@ -51,6 +51,9 @@ public class MemberServiceImpl implements MemberService{
 		
 		Member loginMember = mapper.login(inputMember.getMemberEmail());
 		
+
+		
+		
 		// 2. 만약에 일치하는 이메일이 없어서 조회 결과가 null 인 경우
 		
 		if(loginMember == null)  return null;
@@ -61,14 +64,26 @@ public class MemberServiceImpl implements MemberService{
 		
 		// 일치하지 않으면
 		
-		if(  !bcrypt.matches(inputMember.getMemberPw(), loginMember.getMemberPw())        ) {
-			return null;
-		}
+//		if(  !bcrypt.matches(inputMember.getMemberPw(), loginMember.getMemberPw())        ) {
+//			return null;
+//		}
 		// 로그인 결과에서 비밀번호 제거
 		
 		loginMember.setMemberPw(null);
 		
 		return loginMember;
+	}
+
+
+	/**
+	 * 이메일 중복검사 서비스
+	 */
+	@Override
+	public int checkEmail(String memberEmail) {
+		
+		 int result = mapper.checkEmail(memberEmail);
+		
+		return result;
 	}
 	
 }
