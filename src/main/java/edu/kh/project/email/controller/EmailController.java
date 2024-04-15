@@ -1,10 +1,14 @@
 package edu.kh.project.email.controller;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import edu.kh.project.member.model.serviceImpl.EmailService;
@@ -76,9 +80,46 @@ public class EmailController {
 		 
 		 String authKey = service.sendEmail("signup", email);
 		 
+		 System.out.println(authKey);
+		 
+		 if(authKey != null) {
+			 return 1; //인증번호가 반환되서 돌아옴
+			           // == 이메일 보내기 성공
+		 }
+		 
 		 return 0;
 		 
 		 
+	 }
+	 
+	 // 이메일 인증번호 확인
+	 
+	 @ResponseBody
+	 @PostMapping("checkAuthKey")
+	 public int checkAuthKey(
+			 
+			 @RequestBody Map<String, String> map
+			 
+			 ) {
+		 
+		 // 입력 받은 이메일, 인증번호가 DB 에 있는지 조회
+		 
+		 int result =service.checkAuthKey(map);
+		 
+		 return result;
+	 }
+	 
+	 @ResponseBody
+	 @RequestMapping("checkNickName")
+	 public int checkNickName(
+			 
+			 @RequestParam("memberNickname") String memberNickname
+			 ) {
+		 
+		 int result = service.checkNickName(memberNickname);
+		
+		 
+		 return result;
 	 }
 	
 	

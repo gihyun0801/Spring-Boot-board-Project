@@ -1,10 +1,17 @@
 package edu.kh.project.member.model.serviceImpl;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import edu.kh.project.common.config.EmailConfig;
 import edu.kh.project.member.model.mapper.EmailMapper;
@@ -18,12 +25,19 @@ public class EmailServiceImpl implements EmailService{
 
 	private final EmailMapper mapper;
 	
+	
+   //타임리프 (템플릿 엔진)을 이용해서 html 코드를 -> java 로 변환
+	private final SpringTemplateEngine templateEngine;
+	
+	
 	private final JavaMailSender mailSender;
+	
  
 	
 	// 이메일 보내기 
 	@Override
-	public String sendEmail(String htmlName, String email) {
+	public String sendEmail(String htmlName, String email
+			) {
 		
 		 	// 6자리 난수(인증 코드) 생성
 		   String authKey = createAuthKey();
@@ -55,10 +69,13 @@ public class EmailServiceImpl implements EmailService{
 			   helper.setTo(email); //받는 사람 이메일 지정
 			   helper.setSubject(subject); //이메일 제목 지정
 			   
-			   helper.setText(authKey); // 변경 -> html보낼거임(변경예정)
+			   helper.setText(  loadHtml(authKey, htmlName), true  ); // 변경 -> html보낼거임(변경예정)
+			   // true 가 뭐냐 HTML 코드 해석 여부를 물어보는거다 (innerHtml) 해석 여부
 			   
 			   // CID (Content-ID) 를 이용해 메일에 이미지 첨부
 			   // logo 추가예정
+			   // 파일 첨부와는 다르다, 이메일 내용 자체에 사용할 이미지 첨부
+			   helper.addInline("logo", new ClassPathResource("static/images/logo.jpg"));
 			   
 			   mailSender.send(mimeMessage);
 			   
@@ -67,16 +84,50 @@ public class EmailServiceImpl implements EmailService{
 			   return null;
 		   }
 		  		
+		   //이메일 + 인증 번호를 "TB_AUTH_KEY" 테이블 저장
+		   Map<String, String> map = new HashMap<String, String>();
 		   
+		   map.put("authKey", authKey);
+		   map.put("email", email);
+		   
+		   int result = mapper.updateAuthKey(map);
+		   
+		   // 2) 1번 update 실패 시 insert 시도
+		   if(result == 0) {
+			   result = mapper.insertAuthKey(map);
+		   }
+		 
+		   //수정, 삽입 후에도 result 가 0 == 실패
+		   if(result == 0) {
+			   return null;
+		   }
 		
-		
-		return null;
+		   // 성공
+		   return authKey;//오류없이 완료되면 authKey = 난수 반환
 	}
 	
 	
 	
 	
 	
+	private String loadHtml(String authKey, String htmlName) {
+		
+		// org.thymeleaf.Context 선택
+		
+		Context context = new Context();
+		
+		// 타임리프가 적용된 HTML 사용할값 추가
+		context.setVariable("authKey", authKey);
+		
+		//template/email 폴더에서 htmlName과 같은
+		//~.html 파일 내용을 읽어와 string 으로 변환
+		return templateEngine.process("email/" +  htmlName, context);
+	}
+
+
+
+
+
 	/** 인증번호 생성 (영어 대문자 + 소문자 + 숫자 6자리)
 	    * @return authKey
 	    */
@@ -107,6 +158,32 @@ public class EmailServiceImpl implements EmailService{
 	       }
 	       return key;
 	   }
+
+
+
+
+
+	@Override
+	public int checkAuthKey(Map<String, String> map) {
+		
+		int result = mapper.checkAuthKey(map);
+		
+	
+		
+		return  result;
+	}
+
+
+
+
+
+	@Override
+	public int checkNickName(String memberNickname) {
+		
+		 int result = mapper.checkNickName(memberNickname);
+		
+		return result;
+	}
 
 	
 	

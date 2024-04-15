@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import edu.kh.project.member.model.dto.Member;
 import edu.kh.project.member.model.mapper.MemberMapper;
@@ -82,6 +83,57 @@ public class MemberServiceImpl implements MemberService{
 	public int checkEmail(String memberEmail) {
 		
 		 int result = mapper.checkEmail(memberEmail);
+		
+		return result;
+	}
+
+
+	/**
+	 * 회원가입 서비스
+	 */
+	@Override
+	public int signup(Member inputMember, String[] member 
+			) {
+		
+		
+		// 주소가 입력되지 않으면 inputMember.getMemberAddress().equals(",,") 값으로 들어온다.
+		
+		// inputMembet.getMemgerARS
+		//INPUTmEMBER.GETmEMBERaDDSS("
+		
+		// 주소가 입력된 경우
+		
+		if(!inputMember.getMemberAddress().equals(",,")) {
+			
+			// Sring.join("구분자", 배열_
+			// 이렇게 작성하면 배열의 모든 요소 사이에 "구분자"를 추가하여
+			// 하나의 문자열로 만드어 반환하는 메서드
+			
+			// 구분자로 ^^^ 쓴 이유
+			// 주소, 상세주소에 없는 특수문자 작성
+			// 나중에 다시 3분할 때 구분자로 이용할 예정
+			
+			String address  = String.join("^^^", member);
+			
+			System.out.println(address);
+			//inputMember 로 합쳐진 주소를 세팅
+			inputMember.setMemberAddress(address);
+		}else { // 주소 입력
+			inputMember.setMemberAddress(null);
+		}
+		
+		// 이메일, 비밀번호 (pass02!), 닉네임 , 전화번호 주소
+		
+		//비밀번호를 암호화 하여 inputMember 에 세팅
+		
+		String encPw = bcrypt.encode(inputMember.getMemberPw());
+		
+        inputMember.setMemberPw(encPw);
+        
+        int result = mapper.signup(inputMember);
+        
+     
+		
 		
 		return result;
 	}

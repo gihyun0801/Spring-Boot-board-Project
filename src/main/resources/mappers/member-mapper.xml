@@ -21,5 +21,14 @@ WHERE MEMBER_EMAIL = #{memberEmail} AND MEMBER_DEL_FL = 'N'
 
 </select>
 
+<insert id="signup" parameterType="edu.kh.project.member.model.dto.Member">
+
+
+INSERT INTO "MEMBER"
+VALUES(SEQ_MEMBER_NO.NEXTVAL, #{memberEmail}, #{memberPw}, #{memberNickname}, #{memberTel}, #{memberAddress}, DEFAULT, DEFAULT, DEFAULT, DEFAULT)
+
+
+</insert>
+
 
 </mapper>

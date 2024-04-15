@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 @Controller
 @Slf4j
 @RequestMapping("member")
+
 public class MemberController {
  
 	@Autowired //의존성 주입
@@ -146,6 +147,41 @@ public class MemberController {
 			) {
 		
 		return service.checkEmail(memberEmail);
+		
+	}
+	
+	/** 회원 가입 입력된 회원정보 (memberEmail, memberPw, memberNickname, memberTel, memberAddress(따로받아서 처리) )
+	 * @param memberAddress : 입력한 주소 input 3개의 값을 배열로 전달 [우편번호, 도로명/지번주소, 상세주소]
+	 * @param member
+	 * @param ra : 리다이렉트 시 request scope 로 데이터 전달하는 객체
+	 * @return
+	 */
+	@PostMapping("signup")
+	public String signup(
+			Member inputMember,
+			@RequestParam(value="memberAddress", required=false) String[] member
+			, RedirectAttributes ra
+			) {
+		
+		 // 회원 가입 서비스 호출
+		
+		int result = service.signup(inputMember, member);
+		   String path = null;
+	        String message = null;
+	        
+	        if(result > 0) {
+	        	
+	        	message = inputMember.getMemberNickname() + "님의 가입을 환영합니다";
+	        	path = "/";
+	        	ra.addFlashAttribute("message", message);
+	        	
+	        }else {
+	        	message = "회원 가입 실패..";
+	        	path = "/signup";
+	        	ra.addFlashAttribute("message", message);
+	        }
+		return "redirect:" + path;
+		
 		
 	}
 	 
